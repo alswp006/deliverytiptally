@@ -75,3 +75,15 @@ export const DEFAULT_SETTINGS: AppSettings = {
   reviewRequested: false,
   schemaVersion: 1,
 };
+
+/** 화면 간 navigate state 계약 — 경로별 location.state 형태 */
+export interface RouteState {
+  "/": Record<string, never> | null;
+  "/orders/new": Record<string, never> | null;
+  "/orders": Record<string, never> | null;
+  /** order는 수정 대상. state가 없으면(직접 진입) null */
+  "/orders/:id/edit": { order?: DeliveryOrder } | null;
+  "/savings": Record<string, never> | null;
+  "/settings/goal": Record<string, never> | null;
+  "/report": Record<string, never> | null;
+}
