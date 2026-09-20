@@ -80,9 +80,19 @@ export default function OrderNew() {
   const submitting = useRef(false);
   const formRef = useRef<HTMLDivElement>(null);
 
+  const clearError = (k: FieldKey) =>
+    setErrors((prev) => {
+      if (!prev[k]) return prev;
+      const next = { ...prev };
+      delete next[k];
+      return next;
+    });
+
   const numberField =
-    (setter: (v: string) => void) => (e: ChangeEvent<HTMLInputElement>) =>
+    (setter: (v: string) => void, key: FieldKey) => (e: ChangeEvent<HTMLInputElement>) => {
       setter(formatDigits(e.target.value));
+      clearError(key);
+    };
 
   function focusFirstError(errs: Partial<Record<FieldKey, string>>) {
     const order: FieldKey[] = ["date", "foodAmount", "deliveryTip", "minOrderPadding", "memo"];
@@ -152,6 +162,8 @@ export default function OrderNew() {
       <div ref={formRef}>
         <ListRow
           contents={<ListRow.Texts type="2RowTypeA" top="날짜" bottom={dateLabel(date)} />}
+          right={<Paragraph.Text typography="st11">변경</Paragraph.Text>}
+          withArrow
           onClick={() => setSheetOpen(true)}
         />
         {errors.date && (
@@ -183,7 +195,7 @@ export default function OrderNew() {
             label="주문 금액"
             placeholder="주문 금액 예: 18,000"
             value={food}
-            onChange={numberField(setFood)}
+            onChange={numberField(setFood, "foodAmount")}
             inputMode="numeric"
             enterKeyHint="next"
             suffix="원"
@@ -198,7 +210,7 @@ export default function OrderNew() {
             label="배달팁"
             placeholder="배달팁 예: 3,000"
             value={tip}
-            onChange={numberField(setTip)}
+            onChange={numberField(setTip, "deliveryTip")}
             inputMode="numeric"
             enterKeyHint="next"
             suffix="원"
@@ -213,7 +225,7 @@ export default function OrderNew() {
             label="최소주문 추가금액"
             placeholder="최소주문 추가금액 예: 2,000"
             value={padding}
-            onChange={numberField(setPadding)}
+            onChange={numberField(setPadding, "minOrderPadding")}
             inputMode="numeric"
             enterKeyHint="next"
             suffix="원"
@@ -228,7 +240,10 @@ export default function OrderNew() {
             label="메모"
             placeholder="메모 예: 야식, 회식"
             value={memo}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setMemo(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setMemo(e.target.value);
+              clearError("memo");
+            }}
             maxLength={30}
             enterKeyHint="done"
             help={errors.memo}
@@ -272,6 +287,7 @@ export default function OrderNew() {
               }
               onClick={() => {
                 setDate(d);
+                clearError("date");
                 setSheetOpen(false);
               }}
             />

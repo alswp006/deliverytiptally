@@ -45,8 +45,14 @@ export default function Home() {
   const [goal, setGoal] = useState(0);
   const [toastOpen, setToastOpen] = useState(false);
   const adLogged = useRef(false);
+  const topRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    try {
+      topRef.current?.scrollIntoView?.({ block: 'start' });
+    } catch {
+      /* jsdom 등 — 무시 */
+    }
     let broken = false;
     let list: DeliveryOrder[] = [];
     try {
@@ -98,7 +104,7 @@ export default function Home() {
       /* 탭-루트라 하단 고정 CTA(SubmitFooter) 금지 — 1차 액션은 히어로 카드 안에 둔다(탭바와 자리 충돌) */
       bottom={<FloatingTabBar items={TABS} />}
     >
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
+      <div ref={topRef} style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
         <Button variant="weak" size="small" onClick={() => moveMonth(-1)}>
           이전 달
         </Button>
@@ -133,6 +139,10 @@ export default function Home() {
               </Button>
             }
           />
+          <Spacing size={8} />
+          <Paragraph.Text typography="st11">
+            {`총 지출 ${formatKRW(summary.totalSpend)} (주문 금액 + 배달팁)`}
+          </Paragraph.Text>
           <Spacing size={16} />
 
           <Card testId="goal-progress-card">
