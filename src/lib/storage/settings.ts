@@ -124,3 +124,16 @@ export function validateGoal(value: number): StorageResult<void> {
   }
   return { ok: true, data: undefined };
 }
+
+/**
+ * 설정 부분 갱신 — 저장 후 최신 설정을 돌려준다.
+ * 목표 금액이 범위를 벗어나면 해당 값은 무시하고 나머지만 반영한다. 저장 실패 시 기존 설정을 그대로 돌려준다.
+ */
+export function updateSettings(data: Partial<AppSettings>): AppSettings {
+  const patch: Partial<AppSettings> = { ...data };
+  if (patch.monthlyTipGoal !== undefined && !validateGoal(patch.monthlyTipGoal).ok) {
+    delete patch.monthlyTipGoal;
+  }
+  const res = saveSettings(patch);
+  return res.ok ? res.data : getSettings();
+}
