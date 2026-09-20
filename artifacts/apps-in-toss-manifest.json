@@ -1,0 +1,37 @@
+{
+  "koreanName": "배달비 누적기",
+  "englishName": "DeliveryTipTally",
+  "appName": "deliverytiptally",
+  "ageRating": "만 19세 이상",
+  "appType": "비게임",
+  "supportEmail": "support@aifactory.dev",
+  "category": {
+    "primary": "재테크"
+  },
+  "subtitle": "월 배달비 한눈에 파악하기",
+  "description": "배달 주문을 할 때마다 주문 금액, 배달팁, 플랫폼을 10초 안에 기록하면, 앱이 월 누적 배달팁과 주문 횟수를 자동 계산합니다. 직접 픽업했을 때의 절약액을 시뮬레이션하거나, 최소주문금액 때문에 추가한 비용을 따로 추적할 수 있습니다. 월 배달비 목표를 설정하면 초과할 때 경고를 받고, 월간 리포트를 공유할 수 있습니다.",
+  "searchKeywords": [
+    "배달팁",
+    "배달 지출",
+    "지출 관리",
+    "가계부",
+    "소비 추적",
+    "절약",
+    "배달앱",
+    "주문 기록",
+    "월간 리포트"
+  ],
+  "keyFeatures": [
+    "주문 정보 10초 안에 기록",
+    "월 누적 배달팁 자동 계산",
+    "직접 픽업 절약액 시뮬레이션",
+    "최소주문금액 추가비 추적",
+    "월 배달비 목표 설정 및 경고"
+  ],
+  "_notes": {
+    "appTypeSuspected": false,
+    "appTypeReasons": [],
+    "reviewLevel": null,
+    "reviewReasons": []
+  }
+}
