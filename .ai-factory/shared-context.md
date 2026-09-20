@@ -152,6 +152,18 @@ export const DEFAULT_SETTINGS: AppSettings = {
   schemaVersion: 1,
 };
 
+/** 화면 간 navigate state 계약 — 경로별 location.state 형태 */
+export interface RouteState {
+  "/": Record<string, never> | null;
+  "/orders/new": Record<string, never> | null;
+  "/orders": Record<string, never> | null;
+  /** order는 수정 대상. state가 없으면(직접 진입) null */
+  "/orders/:id/edit": { order?: DeliveryOrder } | null;
+  "/savings": Record<string, never> | null;
+  "/settings/goal": Record<string, never> | null;
+  "/report": Record<string, never> | null;
+}
+
 ```
 
 ## Existing Codebase (import and use these — do NOT recreate)
@@ -177,6 +189,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     analytics.ts
     contract.ts
     date.ts
+    format.ts
     review.ts
     share.ts
     storage.ts
@@ -202,6 +215,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 - analytics.ts: export type LogFields = Record<string, string | number | boolean | null>; export const DWELL_MS = 3000; export function fireAndForget(call: () => unknown): void; export function logScreen(page: string, extra?: LogFields): void; export function logClick(name: string, extra?: LogFields): void; export function logImpression(name: string, extra?: LogFields): void; export function useScreenLog(page: string): void
 - contract.ts: export type Order =; export type AppSettings =; export type ValidationError =; export type MonthlySummary =; export type getOrdersFn = () => Order[]; export type addOrderFn = (data: Omit<Order, "id">) => Order; export type updateOrderFn = (id: string, data: Partial<Omit<Order, "id">>) => Order | null; export type deleteOrderFn = (id: string) => boolean
 - date.ts: export function todayKST(): string; export function currentMonthKST(): string; export function isValidMonthKey(v: unknown): v is string; export function normalizeMonthParam(v: string | null | undefined): string; export function daysInMonth(month: string): number; export function monthOf(date: string): string; export function shiftMonth(month: string, delta: number): string; export function isFutureMonth(month: string): boolean
+- format.ts: export function formatKRW(n: number): string; export function formatPercent(ratio: number, digits = 0): string; export function formatMonthLabel(month: string): string; export function formatDayLabel(date: string): string; export function formatAmount(amount: number, opts?:
 - review.ts: export function requestReviewOnce(key: string = REVIEW_REQUESTED_KEY): void
 - share.ts: export interface ShareAppOptions; export async function shareApp(opts: ShareAppOptions): Promise<void>
 - storage.ts: export function getItem<T>(key: string): T | null; export function setItem<T>(key: string, value: T): void; export function removeItem(key: string): void
@@ -228,79 +242,4 @@ CRITICAL: Before creating any new function, type, or component, check the list a
 ## Already Implemented (do NOT duplicate or overwrite)
 - 0001: 엔티티 타입 + 상수 정의 (types.ts) (files: src/lib/types.ts)
 - 0002: KST 날짜 유틸 (date.ts) (files: src/lib/date.ts)
-
-## Available exports from existing files
-// src/App.tsx
-export default function App() {
-
-// src/components/AdSlot.tsx
-export function AdSlot({ adGroupId, className, variant, theme }: AdSlotProps) {
-
-// src/components/Amount.tsx
-export function Amount({
-
-// src/components/BottomCTA.tsx
-export function SubmitFooter({
-export function ButtonStack({
-
-// src/components/Card.tsx
-export function Card({
-
-// src/components/CountUp.tsx
-export function CountUp({
-
-// src/components/FloatingTabBar.tsx
-export type TabItem = {
-export function FloatingTabBar({ items }: { items: TabItem[] }) {
-
-// src/components/MiniBar.tsx
-export function MiniBar({
-
-// src/components/PageShell.tsx
-export function PageShell({
-
-// src/components/ScreenScaffold.tsx
-export function ScreenScaffold({
-
-// src/components/Sparkline.tsx
-export function Sparkline({
-
-// src/components/StateView.tsx
-export function EmptyState({
-export function LoadingState({
-
-// src/components/SummaryHero.tsx
-export function SummaryHero({
-
-// src/components/TossPurchase.tsx
-export interface TossPurchaseResult {
-export function TossPurchase({
-
-// src/components/TossRewardAd.tsx
-export function TossRewardAd({
-
-// src/lib/analytics.ts
-export type LogFields = Record<string, string | number | boolean | null>;
-export const DWELL_MS = 3000;
-export function fireAndForget(call: () => unknown): void {
-export function logScreen(page: string, extra?: LogFields): void {
-export function logClick(name: string, extra?: LogFields): void {
-export function logImpression(name: string, extra?: LogFields): void {
-export function useScreenLog(page: string): void {
-
-// src/lib/contract.ts
-export type Order = { id: string; date: string; amountKrw: number; memo?: string; category: string; source: "direct" | "delivery" };
-export type AppSettings = { monthlyGoalKrw: number; currency: "KRW" | "USD"; locale: "ko-KR" | "en-US" };
-export type ValidationError = { field: string; message: string };
-export type MonthlySummary = { year: number; month: number; totalKrw: number; count: number; orders: Order
-
-## Memory Index (자동 학습 — 힌트로만 사용, 실제 코드 확인 필수)
-
-Available topics: deploy(4), general(13), testing(2), ui(3)
-
-Key lessons (verify against actual code before applying):
-- [general] 파일 생성 전 디렉토리 구조 확인 — mkdir -p로 경로 보장 (60% · 타 앱 1회 — 맹신 금지)
-- [general] 화면·라우팅 등 소비자 모듈은 그것이 import하는 생산자 모듈이 병합된 뒤에만 병합하고, 순서를 지킬 수 없으면 소비자 병합과 동시에 최소 플레이스홀더를 만들어 매 병합 직후 타입체크와 빌드가 항상 통과하도록 유지하라. (60% · 타 앱 1회 — 맹신 금지)
-- [general] 전역 라우팅·탭바·Provider 배선은 개별 화면보다 먼저(초반 20% 안에) 완료하고 미구현 화면은 스텁 라우트로 연결해, 시간 예산이 소진돼도 앱이 항상 실행 가능한 상태를 유지하라. (60% · 타 앱 1회 — 맹신 금지)
-- [general] 저장·데이터 접근 등 기반 계층 패킷은 이를 import 하는 화면 패킷보다 반드시 먼저 완료·병합하고, 미완료면 상위 화면 패킷 병합을 차단하라 — 빈 기반 모듈 하나가 전 라우트 스모크를 무너뜨린다. (60% · 타 앱 1회 — 맹신 금지)
-- [general] 외부에서 들어온 모든 값(라우터 state, 로컬 저장소, 부분 입력 폼)은 사용 직전에 배열·객체 기본값으로 정규화하고, 테이블/맵 조회 결과는 존재 확인 후에만 하위 속성이나 length에 접근하라. (60% · 타 앱 1회 — 맹신 금지)
+- 0003: 금액/퍼센트 포맷 유틸 + RouteState 계약 (files: src/lib/types.ts, src/lib/format.ts)
