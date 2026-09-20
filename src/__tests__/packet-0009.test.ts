@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { logClick, logImpression } from "@/lib/log";
+import { logClick, logImpression, __getImpressionCount } from "@/lib/log";
 
 describe("계측 유틸 — logClick / logImpression [packet-0009]", () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>;
+  let fetchSpy: { mock: unknown } & ReturnType<typeof vi.fn>;
   let consoleSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     // 네트워크 요청 감지
-    fetchSpy = vi.spyOn(global, "fetch");
+    fetchSpy = vi.spyOn(global, "fetch") as unknown as typeof fetchSpy;
     // console.error 감지
     consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
@@ -37,7 +37,6 @@ describe("계측 유틸 — logClick / logImpression [packet-0009]", () => {
   describe("AC-2: logImpression 중복 제거", () => {
     it("should deduplicate same impression name — only 1 record for 3 calls", () => {
       // 테스트용 내부 상태 조회 함수 사용
-      const { __getImpressionCount } = require("@/lib/log");
       const countBefore = __getImpressionCount?.("home_banner") ?? 0;
 
       logImpression("home_banner");
@@ -66,6 +65,7 @@ describe("계측 유틸 — logClick / logImpression [packet-0009]", () => {
     });
 
     it("should not send beacon or XMLHttpRequest", () => {
+      if (!("sendBeacon" in navigator)) Object.defineProperty(navigator, "sendBeacon", { value: () => true, configurable: true, writable: true });
       const beaconSpy = vi.spyOn(navigator, "sendBeacon");
       const xhrSpy = vi.spyOn(window.XMLHttpRequest.prototype, "open");
 
