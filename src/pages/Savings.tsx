@@ -109,7 +109,7 @@ export default function Savings() {
       {empty ? (
         <EmptyState
           testId="savings-empty"
-          icon={<Asset.ContentIcon name="icon-document-lines" alt="" />}
+          icon={<Asset.ContentIcon name="icon-document-lines" alt="" style={{ width: 48, height: 48 }} />}
           title="픽업 가능했던 주문이 아직 없어요"
           description="주문을 기록할 때 픽업 가능 여부를 체크해 두면 여기서 계산해요"
         />

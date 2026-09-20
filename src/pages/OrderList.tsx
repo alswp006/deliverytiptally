@@ -178,7 +178,7 @@ export default function OrderList() {
       {monthOrders.length === 0 ? (
         <EmptyState
           testId="order-empty"
-          icon={<Asset.ContentIcon name="icon-document-lines" alt="" />}
+          icon={<Asset.ContentIcon name="icon-document-lines" alt="" style={{ width: 48, height: 48 }} />}
           title={monthHasOrders ? "이 플랫폼 기록이 없어요" : "이 달에는 기록이 없어요"}
           action={
             <Button variant="weak" onClick={goNew}>

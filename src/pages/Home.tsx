@@ -140,9 +140,11 @@ export default function Home() {
             }
           />
           <Spacing size={8} />
-          <Paragraph.Text typography="st11">
-            {`총 지출 ${formatKRW(summary.totalSpend)} (주문 금액 + 배달팁)`}
-          </Paragraph.Text>
+          <div style={{ paddingLeft: 16 }}>
+            <Paragraph.Text typography="st11">
+              {`총 지출 ${formatKRW(summary.totalSpend)} (주문 금액 + 배달팁)`}
+            </Paragraph.Text>
+          </div>
           <Spacing size={16} />
 
           <Card testId="goal-progress-card">
@@ -243,7 +245,7 @@ export default function Home() {
           )}
           <Spacing size={16} />
 
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 8px' }}>
             <TextButton size="small" onClick={() => navigate('/orders')}>전체 기록</TextButton>
             <TextButton
               size="small"
