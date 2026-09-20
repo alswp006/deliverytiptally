@@ -17,7 +17,8 @@ import { formatKRW, formatMonthLabel, formatPercent } from "@/lib/format";
 import { shareApp } from "@/lib/share";
 import { summarize } from "@/lib/summary";
 import { listOrders } from "@/lib/storage/core";
-import { isReportUnlocked, markReportUnlocked } from "@/lib/storage/settings";
+import { getSettings, isReportUnlocked, markReportUnlocked, markReviewRequested } from "@/lib/storage/settings";
+import { requestReviewOnce } from "@/lib/review";
 import { PLATFORM_LABEL } from "@/lib/types";
 import type { DeliveryOrder } from "@/lib/types";
 
@@ -70,6 +71,18 @@ export default function Report() {
 
   const empty = summary.orderCount === 0;
   const showBody = !empty && unlocked;
+
+  useEffect(() => {
+    if (!showBody) return;
+    try {
+      if (!getSettings().reviewRequested) {
+        requestReviewOnce();
+        markReviewRequested();
+      }
+    } catch {
+      /* 리뷰 요청 실패는 리포트에 영향 없음 */
+    }
+  }, [showBody]);
 
   useEffect(() => {
     if (!showBody || impressionLogged.current) return;
