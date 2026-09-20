@@ -14,6 +14,7 @@ describe("주문 CRUD + 입력 검증 (한도·쿼터 에러)", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   // AC-1: addOrder 기본 동작
@@ -122,7 +123,10 @@ describe("주문 CRUD + 입력 검증 (한도·쿼터 에러)", () => {
     it("should validate future date", () => {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const futureDateStr = tomorrow.toISOString().split("T")[0];
+      const year = tomorrow.getFullYear();
+      const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
+      const day = String(tomorrow.getDate()).padStart(2, "0");
+      const futureDateStr = `${year}-${month}-${day}`;
 
       const input: OrderInput = {
         date: futureDateStr,
@@ -287,8 +291,15 @@ describe("주문 CRUD + 입력 검증 (한도·쿼터 에러)", () => {
     });
 
     it("updateOrder should update order and modify updatedAt", () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const year = yesterday.getFullYear();
+      const month = String(yesterday.getMonth() + 1).padStart(2, "0");
+      const day = String(yesterday.getDate()).padStart(2, "0");
+      const dateStr = `${year}-${month}-${day}`;
+
       const input: OrderInput = {
-        date: "2026-09-21",
+        date: dateStr,
         platform: "BAEMIN",
         foodAmount: 18000,
         deliveryTip: 3000,
@@ -335,8 +346,15 @@ describe("주문 CRUD + 입력 검증 (한도·쿼터 에러)", () => {
     });
 
     it("deleteOrder should remove order from storage", () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const year = yesterday.getFullYear();
+      const month = String(yesterday.getMonth() + 1).padStart(2, "0");
+      const day = String(yesterday.getDate()).padStart(2, "0");
+      const dateStr = `${year}-${month}-${day}`;
+
       const input: OrderInput = {
-        date: "2026-09-21",
+        date: dateStr,
         platform: "BAEMIN",
         foodAmount: 18000,
         deliveryTip: 3000,
