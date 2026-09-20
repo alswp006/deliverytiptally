@@ -201,7 +201,7 @@ export default function OrderList() {
                 <ListRow.Texts
                   type="2RowTypeA"
                   top={`${PLATFORM_LABEL[o.platform] ?? "기타"} · ${formatDayLabel(o.date)}`}
-                  bottom={`주문 ${formatKRW(o.foodAmount)} · 추가 ${formatKRW(o.minOrderPadding)}`}
+                  bottom={`주문 ${formatKRW(o.foodAmount)} · 추가 ${formatKRW(o.minOrderPadding)}${o.memo ? ` · ${o.memo}` : ""}`}
                 />
               }
               right={<Paragraph.Text typography="st11">{`팁 ${formatKRW(o.deliveryTip)}`}</Paragraph.Text>}
