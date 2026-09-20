@@ -12,7 +12,7 @@ import { MiniBar } from "@/components/MiniBar";
 import { EmptyState } from "@/components/StateView";
 import { TossRewardAd } from "@/components/TossRewardAd";
 import { logClick, logImpression } from "@/lib/analytics";
-import { currentMonthKST, normalizeMonthParam } from "@/lib/date";
+import { currentMonthKST, normalizeMonthParam, shiftMonth } from "@/lib/date";
 import { formatKRW, formatMonthLabel, formatPercent } from "@/lib/format";
 import { shareApp } from "@/lib/share";
 import { summarize } from "@/lib/summary";
@@ -65,6 +65,7 @@ export default function Report() {
   );
 
   const summary = useMemo(() => summarize(readOrders(), month), [month]);
+  const prevSummary = useMemo(() => summarize(readOrders(), shiftMonth(month, -1)), [month]);
   const [unlocked, setUnlocked] = useState(() => readUnlocked(month));
   const cardRef = useRef<HTMLDivElement>(null);
   const impressionLogged = useRef(false);
@@ -108,7 +109,7 @@ export default function Report() {
     } catch {
       /* 저장 실패해도 이번 세션에서는 공개 */
     }
-    logClick("unlock_report");
+    logClick("view_monthly_report");
     setUnlocked(true);
   };
 
@@ -122,6 +123,13 @@ export default function Report() {
   };
 
   const top = summary.byPlatform[0];
+  const diff = summary.totalTip - prevSummary.totalTip;
+  const diffText =
+    prevSummary.orderCount === 0 || prevSummary.totalTip <= 0
+      ? "전월 기록 없음"
+      : `${diff >= 0 ? "+" : "-"}${formatKRW(Math.abs(diff))} (${diff >= 0 ? "+" : "-"}${(
+          Math.abs(diff / prevSummary.totalTip) * 100
+        ).toFixed(1)}%)`;
 
   const body = (
     <div ref={cardRef} data-testid="report-card">
@@ -149,6 +157,14 @@ export default function Report() {
           />
         ) : null}
         <ListRow
+          contents={<ListRow.Texts type="2RowTypeA" top="전월 대비" bottom={`${formatMonthLabel(shiftMonth(month, -1))} 기준`} />}
+          right={<Paragraph.Text typography="st11">{diffText}</Paragraph.Text>}
+        />
+        <ListRow
+          contents={<ListRow.Texts type="2RowTypeA" top="최소주문 추가" bottom="채우려고 더 쓴 돈" />}
+          right={<Paragraph.Text typography="st11">{formatKRW(summary.totalPadding)}</Paragraph.Text>}
+        />
+        <ListRow
           contents={<ListRow.Texts type="2RowTypeA" top="픽업했다면 아낄 돈" bottom="포장 가능 주문 기준" />}
           right={<Paragraph.Text typography="st11">{formatKRW(summary.pickupSavable)}</Paragraph.Text>}
         />
@@ -156,7 +172,7 @@ export default function Report() {
       <Spacing size={24} />
       <Paragraph.Text typography="t4">일별 배달팁</Paragraph.Text>
       <Spacing size={12} />
-      <Sparkline data={summary.dailyTips} />
+      <Sparkline testId="report-sparkline" data={summary.dailyTips} />
       {top ? (
         <>
           <Spacing size={24} />
