@@ -25,7 +25,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
    *   - ratio = 5000 / 42000 ≈ 0.1190476
    *   - yearly = 5000 * 12 = 60000
    */
-  it("AC-1[P0]: 픽스처로 절약액·비율·연연금을 정확히 계산한다", () => {
+  it("AC-1[P0]: 픽스처로 절약액·비율·연연금을 정확히 계산한다", async () => {
     const orders: DeliveryOrder[] = [
       {
         id: "o1",
@@ -53,7 +53,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
       },
     ];
 
-    const { calcSavings } = require("@/lib/savings");
+    const { calcSavings } = await import("@/lib/savings");
     const result = calcSavings(orders, "2026-09");
 
     expect(result.savable).toBe(5000);
@@ -78,7 +78,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
    *   - ratio = 3000 / 39000 ≈ 0.0769
    *   - yearly = 3000 * 12 = 36000
    */
-  it("AC-1[P0]: 월별 필터링 검증 — 여러 달 주문이 섞여 있을 때 특정 월만 계산한다", () => {
+  it("AC-1[P0]: 월별 필터링 검증 — 여러 달 주문이 섞여 있을 때 특정 월만 계산한다", async () => {
     const orders: DeliveryOrder[] = [
       {
         id: "o_08",
@@ -130,7 +130,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
       },
     ];
 
-    const { calcSavings } = require("@/lib/savings");
+    const { calcSavings } = await import("@/lib/savings");
     const result = calcSavings(orders, "2026-09");
 
     // 2026-09만 필터링: savable = 2000 + 1000 = 3000
@@ -146,8 +146,8 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
   /**
    * AC-2 [P0]: 주문 0건 월에서 NaN/Infinity 없이 모두 0을 반환한다
    */
-  it("AC-2[P0]: 주문 0건 월에서 NaN/Infinity 없이 모두 0을 반환한다", () => {
-    const { calcSavings } = require("@/lib/savings");
+  it("AC-2[P0]: 주문 0건 월에서 NaN/Infinity 없이 모두 0을 반환한다", async () => {
+    const { calcSavings } = await import("@/lib/savings");
     const result = calcSavings([], "2026-09");
 
     expect(result.savable).toBe(0);
@@ -163,7 +163,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
   /**
    * AC-2 추가: 다른 달 주문만 있는 경우 (필터링 검증)
    */
-  it("AC-2 variant: 다른 달 주문만 있으면 해당 월은 0을 반환한다", () => {
+  it("AC-2 variant: 다른 달 주문만 있으면 해당 월은 0을 반환한다", async () => {
     const orders: DeliveryOrder[] = [
       {
         id: "o1",
@@ -179,7 +179,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
       },
     ];
 
-    const { calcSavings } = require("@/lib/savings");
+    const { calcSavings } = await import("@/lib/savings");
     const result = calcSavings(orders, "2026-09");
 
     expect(result.savable).toBe(0);
@@ -190,7 +190,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
   /**
    * AC-3 [P1]: pickupAvailable=false인 주문만 있으면 savable=0이다
    */
-  it("AC-3[P1]: pickupAvailable=false인 주문만 있으면 savable=0이다", () => {
+  it("AC-3[P1]: pickupAvailable=false인 주문만 있으면 savable=0이다", async () => {
     const orders: DeliveryOrder[] = [
       {
         id: "o1",
@@ -218,7 +218,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
       },
     ];
 
-    const { calcSavings } = require("@/lib/savings");
+    const { calcSavings } = await import("@/lib/savings");
     const result = calcSavings(orders, "2026-09");
 
     expect(result.savable).toBe(0);
@@ -236,7 +236,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
    *
    * 예상: throw 없이 현재 월(currentMonthKST()) 기준으로 처리
    */
-  it("AC-4[P1]: 한글 월명 '9월'을 throw 없이 처리한다", () => {
+  it("AC-4[P1]: 한글 월명 '9월'을 throw 없이 처리한다", async () => {
     const orders: DeliveryOrder[] = [
       {
         id: "o1",
@@ -252,7 +252,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
       },
     ];
 
-    const { calcSavings } = require("@/lib/savings");
+    const { calcSavings } = await import("@/lib/savings");
     expect(() => calcSavings(orders, "9월" as any)).not.toThrow();
 
     const result = calcSavings(orders, "9월" as any);
@@ -261,7 +261,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
     expect(typeof result.yearly).toBe("number");
   });
 
-  it("AC-4[P1]: null 파라미터를 throw 없이 처리한다", () => {
+  it("AC-4[P1]: null 파라미터를 throw 없이 처리한다", async () => {
     const orders: DeliveryOrder[] = [
       {
         id: "o1",
@@ -277,7 +277,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
       },
     ];
 
-    const { calcSavings } = require("@/lib/savings");
+    const { calcSavings } = await import("@/lib/savings");
     expect(() => calcSavings(orders, null as any)).not.toThrow();
 
     const result = calcSavings(orders, null as any);
@@ -286,7 +286,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
     expect(typeof result.yearly).toBe("number");
   });
 
-  it("AC-4[P1]: undefined 파라미터를 throw 없이 처리한다", () => {
+  it("AC-4[P1]: undefined 파라미터를 throw 없이 처리한다", async () => {
     const orders: DeliveryOrder[] = [
       {
         id: "o1",
@@ -302,7 +302,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
       },
     ];
 
-    const { calcSavings } = require("@/lib/savings");
+    const { calcSavings } = await import("@/lib/savings");
     expect(() => calcSavings(orders, undefined as any)).not.toThrow();
 
     const result = calcSavings(orders, undefined as any);
@@ -314,7 +314,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
   /**
    * AC-5 [P1]: 함수가 입력 배열을 변형하지 않는다 (불변성)
    */
-  it("AC-5[P1]: 입력 배열을 변형하지 않는다", () => {
+  it("AC-5[P1]: 입력 배열을 변형하지 않는다", async () => {
     const orders: DeliveryOrder[] = [
       {
         id: "o1",
@@ -333,7 +333,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
     // 원본 복사 (깊은 복사)
     const ordersCopy = JSON.parse(JSON.stringify(orders));
 
-    const { calcSavings } = require("@/lib/savings");
+    const { calcSavings } = await import("@/lib/savings");
     calcSavings(orders, "2026-09");
 
     // 함수 호출 후에도 배열이 동일해야 함
@@ -344,7 +344,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
    * 추가 테스트: 혼합된 주문들 (pickup:true & false)
    * savable과 ratio를 정확히 계산하는지 검증
    */
-  it("혼합: pickup:true 여러 개 + false 여러 개", () => {
+  it("혼합: pickup:true 여러 개 + false 여러 개", async () => {
     const orders: DeliveryOrder[] = [
       {
         id: "o1",
@@ -384,7 +384,7 @@ describe("calcSavings — 픽업 절약 계산 로직", () => {
       },
     ];
 
-    const { calcSavings } = require("@/lib/savings");
+    const { calcSavings } = await import("@/lib/savings");
     const result = calcSavings(orders, "2026-09");
 
     // savable = (2000+1000) + (2000+0) = 5000 (o1, o2만 카운트)
