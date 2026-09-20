@@ -89,7 +89,7 @@ export default function Home() {
   const goalRatio = goal > 0 && summary ? summary.totalTip / goal : 0;
 
   const moveMonth = (delta: number) => {
-    if (delta > 0 && !isCurrent) return;
+    if (delta > 0 && isCurrent) return;
     tick('tickWeak');
     setMonth((m) => shiftMonth(m, delta));
   };
