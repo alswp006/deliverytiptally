@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Asset, Button, ListRow, Paragraph, Spacing, Top } from "@toss/tds-mobile";
+import { Asset, Badge, Button, ListRow, Paragraph, Spacing, Top } from "@toss/tds-mobile";
 import { ScreenScaffold } from "@/components/ScreenScaffold";
 import { FloatingTabBar } from "@/components/FloatingTabBar";
 import { SummaryHero } from "@/components/SummaryHero";
@@ -81,7 +81,12 @@ export default function Savings() {
       platform: p,
       amount: by.get(p) ?? 0,
     }));
-    return { total, count, rows };
+    const avg = count > 0 ? Math.round(total / count) : 0;
+    // 동점이면 PLATFORM_LABEL 가나다순으로 앞선 1곳만
+    const top = [...rows].sort(
+      (a, b) => b.amount - a.amount || PLATFORM_LABEL[a.platform].localeCompare(PLATFORM_LABEL[b.platform], "ko"),
+    )[0];
+    return { total, count, rows, avg, top };
   }, [monthOrders]);
 
   const navigate = useNavigate();
@@ -106,25 +111,38 @@ export default function Savings() {
       </div>
       <Spacing size={24} />
 
-      {empty ? (
-        <EmptyState
-          testId="savings-empty"
-          icon={<Asset.ContentIcon name="icon-document-lines" alt="" style={{ width: 48, height: 48 }} />}
-          title="픽업 가능했던 주문이 아직 없어요"
-          description="주문을 기록할 때 픽업 가능 여부를 체크해 두면 여기서 계산해요"
-        />
-      ) : (
-        <ListRow
-          contents={
-            <ListRow.Texts type="2RowTypeA" top="픽업 가능했던 주문" bottom={`${pickupOrders.length}건`} />
-          }
-          right={<Paragraph.Text typography="st11">{formatKRW(savable)}</Paragraph.Text>}
-        />
-      )}
+      <Card testId="savings-card">
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Paragraph.Text typography="t4">픽업했다면 아낀 돈</Paragraph.Text>
+          <Badge size="small" variant="weak" color="yellow">
+            추정
+          </Badge>
+        </div>
+        <Spacing size={12} />
+        {empty ? (
+          <EmptyState
+            testId="savings-empty"
+            icon={<Asset.ContentIcon name="icon-document-lines" alt="" style={{ width: 48, height: 48 }} />}
+            title="픽업 가능했던 주문이 아직 없어요"
+            description="주문을 기록할 때 픽업 가능 여부를 체크해 두면 여기서 계산해요"
+          />
+        ) : (
+          <ListRow
+            contents={
+              <ListRow.Texts type="2RowTypeA" top="픽업 가능했던 주문" bottom={`${pickupOrders.length}건`} />
+            }
+            right={<Amount value={savable} unit="원" typography="t3" />}
+          />
+        )}
+        <Spacing size={8} />
+        <Paragraph.Text typography="st13">
+          실제 픽업 시 이동 시간·교통비는 반영되지 않은 추정값이에요
+        </Paragraph.Text>
+      </Card>
       <Spacing size={24} />
 
       <div data-testid="padding-section">
-        <Card>
+        <Card testId="savings-card">
           <Paragraph.Text typography="t4">최소주문 맞추려 더 쓴 돈</Paragraph.Text>
           <Spacing size={12} />
           {padding.count === 0 ? (
@@ -133,7 +151,10 @@ export default function Savings() {
             <>
               <Amount value={padding.total} unit="원" typography="t1" />
               <Spacing size={8} />
-              <Paragraph.Text typography="st11">{`${padding.count}건에서 발생했어요`}</Paragraph.Text>
+              <Paragraph.Text typography="st11">{`발생 ${padding.count}회 · 평균 ${formatKRW(padding.avg)}`}</Paragraph.Text>
+              {padding.top ? (
+                <Paragraph.Text typography="st11">{`가장 많은 곳: ${PLATFORM_LABEL[padding.top.platform]}`}</Paragraph.Text>
+              ) : null}
               <Spacing size={12} />
               {padding.rows.map((r) => (
                 <div key={r.platform}>
@@ -141,7 +162,7 @@ export default function Savings() {
                     contents={<ListRow.Texts type="1RowTypeA" top={PLATFORM_LABEL[r.platform]} />}
                     right={<Paragraph.Text typography="st11">{formatKRW(r.amount)}</Paragraph.Text>}
                   />
-                  <MiniBar ratio={padding.total > 0 ? r.amount / padding.total : 0} />
+                  <MiniBar testId="padding-minibar" ratio={padding.total > 0 ? r.amount / padding.total : 0} />
                   <Spacing size={8} />
                 </div>
               ))}

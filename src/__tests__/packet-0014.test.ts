@@ -149,7 +149,7 @@ describe("픽업 절약 시뮬레이션 화면 `/savings`", () => {
     const section = screen.getByTestId("padding-section");
     // 추가지출 2000 + 1500 = 3500, 2건 (플랫폼별: 배민 2,000 / 쿠팡이츠 1,500)
     expect(section.textContent).toContain(formatKRW(3500));
-    expect(section.textContent).toContain("2건");
+    expect(section.textContent).toContain("발생 2회");
     expect(section.textContent).toContain(formatKRW(2000));
     expect(section.textContent).toContain(formatKRW(1500));
   });
