@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Top, Paragraph, Spacing, ListRow, Button, Badge, Toast, TextButton, Asset } from '@toss/tds-mobile';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Top, Paragraph, Spacing, ListRow, Button, Badge, Toast, TextButton, Asset, AlertDialog } from '@toss/tds-mobile';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { ScreenScaffold } from '../components/ScreenScaffold';
 import { SummaryHero } from '../components/SummaryHero';
@@ -16,7 +16,7 @@ import { summarize } from '../lib/summary';
 import { currentMonthKST, isFutureMonth, shiftMonth } from '../lib/date';
 import { formatKRW, formatMonthLabel, formatDayLabel, formatPercent } from '../lib/format';
 import { safeGet, listOrders } from '../lib/storage/core';
-import { getSettings } from '../lib/storage/settings';
+import { getSettings, markGoalAlerted } from '../lib/storage/settings';
 import { PLATFORM_LABEL, STORAGE_KEYS } from '../lib/types';
 import type { DeliveryOrder } from '../lib/types';
 
@@ -40,6 +40,9 @@ function tick(type: 'tickWeak' | 'success') {
 
 export default function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const savedOrderId = (location.state as { savedOrderId?: unknown } | null)?.savedOrderId;
+  const [goalAlert, setGoalAlert] = useState<{ total: number; goal: number } | null>(null);
   const [month, setMonth] = useState(currentMonthKST);
   const [orders, setOrders] = useState<DeliveryOrder[] | null>(null);
   const [goal, setGoal] = useState(0);
@@ -58,7 +61,17 @@ export default function Home() {
     try {
       broken = !safeGet(STORAGE_KEYS.ORDERS).ok;
       list = broken ? [] : listOrders();
-      setGoal(getSettings().monthlyTipGoal);
+      const settings = getSettings();
+      setGoal(settings.monthlyTipGoal);
+      // 방금 저장한 주문으로 이번 달 목표를 처음 넘겼을 때만 1회 경고
+      if (typeof savedOrderId === 'string' && !broken) {
+        const cur = currentMonthKST();
+        const total = summarize(list, cur).totalTip;
+        if (settings.monthlyTipGoal > 0 && total > settings.monthlyTipGoal && !settings.goalAlertedMonths.includes(cur)) {
+          markGoalAlerted(cur);
+          setGoalAlert({ total, goal: settings.monthlyTipGoal });
+        }
+      }
     } catch {
       broken = true;
     }
@@ -270,6 +283,15 @@ export default function Home() {
         text="저장된 기록을 불러오지 못했어요"
         onClose={() => setToastOpen(false)}
       />
+      {goalAlert ? (
+        <AlertDialog
+          open
+          title="이번 달 배달팁 목표를 넘었어요"
+          description={`${formatKRW(goalAlert.total)} / 목표 ${formatKRW(goalAlert.goal)}`}
+          alertButton={<AlertDialog.AlertButton onClick={() => setGoalAlert(null)}>닫기</AlertDialog.AlertButton>}
+          onClose={() => setGoalAlert(null)}
+        />
+      ) : null}
     </ScreenScaffold>
   );
 }
