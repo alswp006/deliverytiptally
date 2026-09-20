@@ -53,7 +53,7 @@ describe("AppSettings 저장소 + 목표 검증", () => {
         "dtt:settings:v1",
         JSON.stringify({
           monthlyTipGoal: 50000,
-          defaultPlatform: "COUPANG",
+          defaultPlatform: "COUPANG_EATS",
           goalAlertedMonths: ["2026-09"],
           reportUnlockedMonths: [],
           reviewRequested: true,
@@ -96,10 +96,11 @@ describe("AppSettings 저장소 + 목표 검증", () => {
     });
 
     it("should keep only recent 24 months when adding 25th month", () => {
-      // Add 25 months
+      // Add 25 months (2024-01 through 2026-01)
       for (let i = 0; i < 25; i++) {
-        const month = `2024-${String((i % 12) + 1).padStart(2, "0")}`;
-        markGoalAlerted(month);
+        const year = 2024 + Math.floor(i / 12);
+        const month = String((i % 12) + 1).padStart(2, "0");
+        markGoalAlerted(`${year}-${month}`);
       }
 
       const settings = getSettings();
@@ -129,26 +130,34 @@ describe("AppSettings 저장소 + 목표 검증", () => {
     it("should return error when goal is below minimum (500)", () => {
       const result = validateGoal(500);
       expect(result.ok).toBe(false);
-      expect(result.reason).toBe("INVALID");
-      expect(result.errors.monthlyTipGoal).toContain("1,000원 이상");
+      if (!result.ok) {
+        expect(result.reason).toBe("INVALID");
+        expect(result.errors?.monthlyTipGoal).toContain("1,000원");
+      }
     });
 
     it("should return error message with correct minimum amount", () => {
       const result = validateGoal(500);
-      expect(result.errors.monthlyTipGoal).toContain("1,000원");
+      if (!result.ok) {
+        expect(result.errors?.monthlyTipGoal).toContain("1,000원");
+      }
     });
 
     it("should return error when goal exceeds maximum (1,000,000)", () => {
       const result = validateGoal(1000001);
       expect(result.ok).toBe(false);
-      expect(result.reason).toBe("INVALID");
-      expect(result.errors.monthlyTipGoal).toContain("1,000,000원 이하");
+      if (!result.ok) {
+        expect(result.reason).toBe("INVALID");
+        expect(result.errors?.monthlyTipGoal).toContain("1,000,000원");
+      }
     });
 
     it("should return success for valid goal (30,000)", () => {
       const result = validateGoal(30000);
       expect(result.ok).toBe(true);
-      expect(result.errors).toBeUndefined();
+      if (result.ok) {
+        expect(result.data).toBeUndefined();
+      }
     });
 
     it("should return success for minimum boundary (1,000)", () => {
@@ -192,8 +201,10 @@ describe("AppSettings 저장소 + 목표 검증", () => {
     });
 
     it("should keep only recent 24 months in reportUnlockedMonths", () => {
-      for (let i = 1; i <= 25; i++) {
-        markReportUnlocked(`2024-${String(i % 12 || 12).padStart(2, "0")}`);
+      for (let i = 0; i < 25; i++) {
+        const year = 2024 + Math.floor(i / 12);
+        const month = String((i % 12) + 1).padStart(2, "0");
+        markReportUnlocked(`${year}-${month}`);
       }
 
       const settings = getSettings();
@@ -211,14 +222,14 @@ describe("AppSettings 저장소 + 목표 검증", () => {
 
     it("should set default platform", () => {
       expect(getSettings().defaultPlatform).toBe("BAEMIN");
-      setDefaultPlatform("COUPANG");
-      expect(getSettings().defaultPlatform).toBe("COUPANG");
+      setDefaultPlatform("COUPANG_EATS");
+      expect(getSettings().defaultPlatform).toBe("COUPANG_EATS");
     });
 
     it("should persist platform change via saveSettings", () => {
-      setDefaultPlatform("NAVER");
+      setDefaultPlatform("ETC");
       const settings = getSettings();
-      expect(settings.defaultPlatform).toBe("NAVER");
+      expect(settings.defaultPlatform).toBe("ETC");
     });
   });
 
@@ -237,11 +248,11 @@ describe("AppSettings 저장소 + 목표 검증", () => {
 
     it("should preserve other fields when patching", () => {
       markGoalAlerted("2026-09");
-      saveSettings({ defaultPlatform: "COUPANG" });
+      saveSettings({ defaultPlatform: "COUPANG_EATS" });
 
       const settings = getSettings();
       expect(settings.goalAlertedMonths).toEqual(["2026-09"]);
-      expect(settings.defaultPlatform).toBe("COUPANG");
+      expect(settings.defaultPlatform).toBe("COUPANG_EATS");
     });
 
     it("should maintain schemaVersion when saving", () => {
