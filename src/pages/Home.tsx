@@ -1,73 +1,245 @@
-import { Top, Paragraph, Spacing, ListRow, Button } from '@toss/tds-mobile';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Top, Paragraph, Spacing, ListRow, Button, Badge, Toast, TextButton, Asset } from '@toss/tds-mobile';
+import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { ScreenScaffold } from '../components/ScreenScaffold';
 import { SummaryHero } from '../components/SummaryHero';
 import { Card } from '../components/Card';
+import { Amount } from '../components/Amount';
+import { Sparkline } from '../components/Sparkline';
+import { MiniBar } from '../components/MiniBar';
+import { EmptyState, LoadingState } from '../components/StateView';
+import { SubmitFooter } from '../components/BottomCTA';
+import { AdSlot } from '../components/AdSlot';
+import { logClick, logImpression } from '../lib/analytics';
+import { summarize } from '../lib/summary';
+import { currentMonthKST, isFutureMonth, shiftMonth } from '../lib/date';
+import { formatKRW, formatMonthLabel, formatDayLabel, formatPercent } from '../lib/format';
+import { safeGet, listOrders } from '../lib/storage/core';
+import { getSettings } from '../lib/storage/settings';
+import { PLATFORM_LABEL, STORAGE_KEYS } from '../lib/types';
+import type { DeliveryOrder } from '../lib/types';
 
-/**
- * Golden Home page — 대시보드/탭-루트 골든 레퍼런스.
- *
- * 다른 페이지를 쓸 때 이 패턴을 모방하라:
- * - ScreenScaffold로 감싼다(raw fragment 골격 금지) — safe-area + 100dvh 자동 처리.
- * - 화면 최상단에 SummaryHero로 시각 앵커를 만든다('휑함'의 가장 큰 원인은 앵커 부재).
- *   데이터가 있으면 value에 <Amount value={n} unit="원" typography="t1" />로 핵심 숫자를 크게 박아라.
- * - 1차 진입 액션은 SummaryHero 카드 내부 버튼(display="block", 전체폭)에 둔다.
- *   → 화면 중앙 부유/좌측 글자폭 버튼 금지. 하단 TabBar가 있으면 SubmitFooter와 겹치므로 카드 안에.
- * - 핵심 정보는 raw <div>가 아니라 Card로 묶어 위계를 만든다.
- * - 하단 탭이 필요하면(2~5탭): bottom={<FloatingTabBar items={[{label,path}...]} />}.
- *   ('TDS TabBar'는 존재하지 않는다 — 직접 만들지 말고 FloatingTabBar를 써라.)
- * - 카피는 CLAUDE.md "카피 규칙 — AI 냄새 금지"를 따른다: 기능 나열식 홍보 문구·상투구·
- *   generic 버튼("시작하기") 금지. 이 파일의 예시 문구도 앱 맥락에 맞게 교체 대상이다.
- *
- * Scaffold tokens (replaced by scaffold-toss.ts at project creation):
- *   DeliveryTipTally -> the app's display name
- *   이번 달 배달팁으로만 얼마 냈는지 아세요? 주문 한 번 적을 때마다 쌓이는 배달비 누적 계산기    -> the one-line description
- */
+const AD_GROUP_ID: string = import.meta.env.VITE_TOSS_AD_GROUP_ID ?? '';
 
-// ⚠ 이 목록은 골격 예시다 — 앱의 실제 콘텐츠(핵심 지표·최근 기록·바로가기)로 반드시 교체하라.
-// '간편한 사용/빠른 처리' 같은 기능 나열식 홍보 문구는 카피 규칙(CLAUDE.md "AI 냄새 금지") 위반이다.
-// 사용자가 이 화면에서 실제로 확인할 정보를 넣어라 — 아래처럼 데이터가 사는 행으로.
-const HIGHLIGHTS = [
-  { title: '오늘', description: '아직 기록이 없어요' },
-  { title: '이번 주', description: '기록 3건 · 평균 12분' },
-];
+function tick(type: 'tickWeak' | 'success') {
+  try {
+    Promise.resolve(generateHapticFeedback({ type })).catch(() => {});
+  } catch {
+    /* WebView 밖에서는 throw — 무시 */
+  }
+}
 
 export default function Home() {
   const navigate = useNavigate();
+  const [month, setMonth] = useState(currentMonthKST);
+  const [orders, setOrders] = useState<DeliveryOrder[] | null>(null);
+  const [goal, setGoal] = useState(0);
+  const [toastOpen, setToastOpen] = useState(false);
+  const adLogged = useRef(false);
+
+  useEffect(() => {
+    let broken = false;
+    let list: DeliveryOrder[] = [];
+    try {
+      broken = !safeGet(STORAGE_KEYS.ORDERS).ok;
+      list = broken ? [] : listOrders();
+      setGoal(getSettings().monthlyTipGoal);
+    } catch {
+      broken = true;
+    }
+    setOrders(list);
+    if (broken) setToastOpen(true);
+  }, []);
+
+  useEffect(() => {
+    if (AD_GROUP_ID && !adLogged.current) {
+      adLogged.current = true;
+      logImpression('home_banner');
+    }
+  }, []);
+
+  const summary = useMemo(() => (orders ? summarize(orders, month) : null), [orders, month]);
+  const recent = useMemo(
+    () =>
+      (orders ?? [])
+        .filter((o) => o.date.slice(0, 7) === month)
+        .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.createdAt - a.createdAt))
+        .slice(0, 3),
+    [orders, month],
+  );
+
+  const loading = summary === null;
+  const empty = !loading && summary.orderCount === 0;
+  const isCurrent = isFutureMonth(shiftMonth(month, 1));
+  const goalRatio = goal > 0 && summary ? summary.totalTip / goal : 0;
+
+  const moveMonth = (delta: number) => {
+    if (delta > 0 && !isCurrent) return;
+    tick('tickWeak');
+    setMonth((m) => shiftMonth(m, delta));
+  };
+
+  const caption = summary
+    ? `주문 ${summary.orderCount}회 · 평균 ${formatKRW(summary.avgTip)} · 최소주문 추가 ${formatKRW(summary.totalPadding)}`
+    : undefined;
 
   return (
     <ScreenScaffold
-      top={<Top title={<Top.TitleParagraph>DeliveryTipTally</Top.TitleParagraph>} />}
+      top={<Top title={<Top.TitleParagraph>이번 달 배달팁</Top.TitleParagraph>} />}
+      bottom={
+        <SubmitFooter
+          label="배달 기록하기"
+          onClick={() => {
+            logClick('home_add_order');
+            navigate('/orders/new');
+          }}
+        />
+      }
     >
-      {/* 시각 앵커: 헤드라인 + 카드 내 진입 버튼(부유 금지, display="block" 전체폭).
-          데이터 앱이면 value를 <Amount typography="t1" />(핵심 숫자)로 교체하라. */}
-      <SummaryHero
-        label="DeliveryTipTally"
-        value={<Paragraph.Text typography="t2">이번 달 배달팁으로만 얼마 냈는지 아세요? 주문 한 번 적을 때마다 쌓이는 배달비 누적 계산기</Paragraph.Text>}
-        caption="로그인 없이 바로 쓸 수 있어요"
-        action={
-          // 라벨은 앱의 핵심 행동 동사로 교체하라 — "연봉 계산하기"/"기록 남기기" 등.
-          // generic "시작하기"/"확인"은 카피 규칙 위반. onClick도 실제 첫 화면 경로로.
-          <Button variant="fill" display="block" onClick={() => navigate('/')}>
-            첫 결과 보기
-          </Button>
-        }
-        testId="home-hero"
-      />
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
+        <Button variant="weak" size="small" onClick={() => moveMonth(-1)}>
+          이전 달
+        </Button>
+        <Paragraph.Text typography="st11">{formatMonthLabel(month)}</Paragraph.Text>
+        <Button variant="weak" size="small" disabled={isCurrent} onClick={() => moveMonth(1)}>
+          다음 달
+        </Button>
+      </div>
+      <Spacing size={16} />
 
-      <Spacing size={24} />
-
-      {/* 핵심 정보는 Card로 묶기(raw div 금지) — 위계 생성 */}
-      <Card testId="home-highlights">
-        {HIGHLIGHTS.map((h, idx) => (
-          <ListRow
-            key={idx}
-            contents={<ListRow.Texts type="2RowTypeA" top={h.title} bottom={h.description} />}
+      {loading ? (
+        <LoadingState rows={3} testId="home-loading" />
+      ) : (
+        <>
+          <SummaryHero
+            testId="tip-summary-hero"
+            label={isCurrent ? '이번 달 배달팁' : `${formatMonthLabel(month)} 배달팁`}
+            value={<Amount value={summary.totalTip} unit="원" typography="t1" />}
+            caption={caption}
           />
-        ))}
-      </Card>
+          <Spacing size={16} />
 
-      <Spacing size={24} />
+          <Card testId="goal-progress-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+              <Paragraph.Text typography="st11">
+                {`${formatKRW(summary.totalTip)} / ${formatKRW(goal)} · ${formatPercent(goalRatio)}`}
+              </Paragraph.Text>
+              {goalRatio >= 1 ? (
+                <Badge size="small" variant="fill" color="green">목표 달성</Badge>
+              ) : goalRatio >= 0.8 ? (
+                <Badge size="small" variant="fill" color="yellow">목표 임박</Badge>
+              ) : null}
+            </div>
+            <Spacing size={8} />
+            <MiniBar ratio={goalRatio} />
+            <Spacing size={8} />
+            <Button
+              variant="weak"
+              size="small"
+              onClick={() => {
+                logClick('edit_goal');
+                navigate('/settings/goal', { state: { currentGoal: goal } });
+              }}
+            >
+              목표 수정
+            </Button>
+          </Card>
+          <Spacing size={24} />
+
+          {empty ? (
+            <EmptyState
+              testId="home-empty"
+              icon={<Asset.ContentIcon name="icon-document-lines" alt="" style={{ width: 48, height: 48 }} />}
+              title="이번 달 배달 기록이 아직 없어요"
+              description="주문을 기록하면 배달팁 합계가 여기에 쌓여요"
+            />
+          ) : (
+            <>
+              <Paragraph.Text typography="t4">배달팁 추이</Paragraph.Text>
+              <Spacing size={12} />
+              <Sparkline testId="tip-trend-sparkline" data={summary.dailyTips} />
+              <Spacing size={24} />
+
+              <Card testId="platform-minibar">
+                {summary.byPlatform.map((p) => (
+                  <div key={p.platform} style={{ paddingBottom: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Paragraph.Text typography="st11">{PLATFORM_LABEL[p.platform]}</Paragraph.Text>
+                      <Paragraph.Text typography="st11">{`${formatKRW(p.tip)} · ${formatPercent(p.ratio)}`}</Paragraph.Text>
+                    </div>
+                    <Spacing size={4} />
+                    <MiniBar ratio={p.ratio} />
+                  </div>
+                ))}
+              </Card>
+              <Spacing size={24} />
+
+              {summary.pickupSavable > 0 ? (
+                <>
+                  <Card>
+                    <ListRow
+                      onClick={() => {
+                        tick('tickWeak');
+                        logClick('open_pickup_savings');
+                        navigate('/savings', { state: { month } });
+                      }}
+                      contents={
+                        <ListRow.Texts
+                          type="2RowTypeA"
+                          top="픽업했다면?"
+                          bottom={`최대 ${formatKRW(summary.pickupSavable)} 아낄 수 있었어요`}
+                        />
+                      }
+                    />
+                  </Card>
+                  <Spacing size={24} />
+                </>
+              ) : null}
+
+              <div data-testid="recent-orders-card">
+                <Paragraph.Text typography="t4">최근 주문</Paragraph.Text>
+                {recent.map((o) => (
+                  <ListRow
+                    key={o.id}
+                    onClick={() => navigate('/orders/' + o.id + '/edit', { state: { order: o } })}
+                    contents={
+                      <ListRow.Texts
+                        type="2RowTypeA"
+                        top={`${PLATFORM_LABEL[o.platform]} · ${formatDayLabel(o.date)}`}
+                        bottom={`주문 ${formatKRW(o.foodAmount)} · 추가 ${formatKRW(o.minOrderPadding)}`}
+                      />
+                    }
+                    right={<Paragraph.Text typography="st11">{`팁 ${formatKRW(o.deliveryTip)}`}</Paragraph.Text>}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+          <Spacing size={16} />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <TextButton size="small" onClick={() => navigate('/orders')}>전체 기록</TextButton>
+            <TextButton
+              size="small"
+              onClick={() => navigate('/report', { state: { month } })}
+            >
+              월간 리포트 보기
+            </TextButton>
+          </div>
+          <Spacing size={16} />
+        </>
+      )}
+
+      {AD_GROUP_ID ? <AdSlot adGroupId={AD_GROUP_ID} /> : null}
+      <Spacing size={96} />
+
+      <Toast
+        open={toastOpen}
+        position="bottom"
+        text="저장된 기록을 불러오지 못했어요"
+        onClose={() => setToastOpen(false)}
+      />
     </ScreenScaffold>
   );
 }
