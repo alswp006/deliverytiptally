@@ -54,9 +54,14 @@ function writeScroll(y: number) {
 export default function OrderList() {
   const navigate = useNavigate();
   const location = useLocation();
-  const deletedId = (location.state as { deletedId?: string } | null)?.deletedId ?? null;
+  const routeState = location.state as { deletedId?: string; focusMonth?: unknown } | null;
+  const deletedId = routeState?.deletedId ?? null;
+  const focusMonth =
+    typeof routeState?.focusMonth === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(routeState.focusMonth)
+      ? routeState.focusMonth
+      : null;
 
-  const [month, setMonth] = useState(currentMonthKST());
+  const [month, setMonth] = useState(focusMonth ?? currentMonthKST());
   const [platform, setPlatform] = useState<Platform | null>(null);
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [orders] = useState<DeliveryOrder[]>(() => {
@@ -181,7 +186,7 @@ export default function OrderList() {
           icon={<Asset.ContentIcon name="icon-document-lines" alt="" style={{ width: 48, height: 48 }} />}
           title={monthHasOrders ? "이 플랫폼 기록이 없어요" : "이 달에는 기록이 없어요"}
           action={
-            <Button variant="weak" onClick={goNew}>
+            <Button variant="weak" display="block" onClick={goNew}>
               배달 기록하기
             </Button>
           }
