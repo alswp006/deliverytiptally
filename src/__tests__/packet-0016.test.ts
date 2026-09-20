@@ -25,7 +25,9 @@ vi.mock("@toss/tds-mobile", () => {
     TextField: React.forwardRef(({ label, help, hasError, variant, prefix, suffix, ...p }: any, ref: any) =>
       h("div", null, h("label", null, label), h("input", { ref, ...p }), hasError && help ? h("span", { role: "alert" }, help) : null),
     ),
-    Chip: ({ children, onClick }: any) => h("button", { onClick }, children),
+    // 실제 TDS 구조: Chip=그룹 컨테이너(div), ChipItem=개별 칩(button). Chip.Item은 없다.
+    Chip: ({ children }: any) => h("div", { role: "group" }, children),
+    ChipItem: ({ children, onClick }: any) => h("button", { onClick }, children),
     Button: ({ children, onClick, display, variant, size, ...p }: any) => h("button", { onClick, ...p }, children),
     FixedBottomCTA: ({ children, onClick, loading, ...p }: any) => h("button", { onClick, ...p }, children),
     Paragraph: { Text: ({ children }: any) => h("span", null, children) },

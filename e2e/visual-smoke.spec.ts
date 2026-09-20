@@ -12,16 +12,68 @@ import { test, expect, type Page } from "@playwright/test";
  */
 const ROUTES: { path: string; name: string }[] = [
   { path: "/", name: "home" },
+  { path: "/orders/new", name: "order-new" },
   { path: "/orders", name: "orders" },
+  { path: "/orders/o_seed_1/edit", name: "order-edit" },
+  { path: "/savings", name: "savings" },
   { path: "/report", name: "report" },
-  // { path: "/result", name: "result" },   // ← 이 앱의 라우트를 추가
-  // { path: "/settings", name: "settings" },
+  { path: "/settings/goal", name: "goal-settings" },
 ];
 
-/** 데이터가 필요한 화면용 localStorage 시드(앱에 맞게 채워라). 앱 스크립트보다 먼저 실행된다. */
+/**
+ * localStorage 시드 — 앱 스크립트보다 먼저 실행된다.
+ * 빈 상태만 캡처하면 목록·집계·리포트 레이아웃을 한 장도 못 본다 → 이번 달 주문 몇 건을 깔아둔다.
+ * (`/orders/o_seed_1/edit`은 여기 깔린 `o_seed_1`을 id로 조회한다.)
+ */
 async function seed(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    // window.localStorage.setItem("MY_STORAGE_KEY", JSON.stringify({ /* ... */ }));
+    const now = new Date();
+    const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const day = (d: number) => `${ym}-${String(Math.min(d, 28)).padStart(2, "0")}`;
+    const order = (
+      id: string,
+      dayOfMonth: number,
+      platform: string,
+      foodAmount: number,
+      deliveryTip: number,
+      minOrderPadding: number,
+      pickupAvailable: boolean,
+      memo: string,
+    ) => ({
+      id,
+      date: day(dayOfMonth),
+      platform,
+      foodAmount,
+      deliveryTip,
+      minOrderPadding,
+      pickupAvailable,
+      memo,
+      createdAt: Date.parse(day(dayOfMonth)),
+      updatedAt: Date.parse(day(dayOfMonth)),
+    });
+
+    window.localStorage.setItem(
+      "dtt:orders:v1",
+      JSON.stringify([
+        order("o_seed_1", 3, "BAEMIN", 18000, 3000, 2000, true, "점심 김치찌개"),
+        order("o_seed_2", 7, "COUPANG_EATS", 24500, 4500, 0, false, ""),
+        order("o_seed_3", 12, "YOGIYO", 15000, 2500, 3000, true, "야식 치킨"),
+        order("o_seed_4", 15, "BAEMIN", 31000, 3500, 0, false, ""),
+        order("o_seed_5", 21, "ETC", 12000, 2000, 1500, true, ""),
+      ]),
+    );
+    window.localStorage.setItem(
+      "dtt:settings:v1",
+      JSON.stringify({
+        monthlyTipGoal: 30000,
+        defaultPlatform: "BAEMIN",
+        goalAlertedMonths: [],
+        // 리포트는 광고 게이트 뒤에 있다 — 해제된 상태로 깔아야 본문 레이아웃이 찍힌다.
+        reportUnlockedMonths: [ym],
+        reviewRequested: false,
+        schemaVersion: 1,
+      }),
+    );
   });
 }
 

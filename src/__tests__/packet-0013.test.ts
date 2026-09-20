@@ -54,7 +54,9 @@ vi.mock("@toss/tds-mobile", () => {
       ({ open, children }: any) => (open ? h("div", { role: "dialog" }, children) : null),
       { Header: passthrough("div") },
     ),
-    Chip: ({ children, onClick, selected, active }: any) =>
+    // 실제 TDS 구조: Chip=그룹 컨테이너(div), ChipItem=개별 칩(button). Chip.Item은 없다.
+    Chip: ({ children }: any) => h("div", { role: "group" }, children),
+    ChipItem: ({ children, onClick, selected, active }: any) =>
       h("button", { type: "button", "aria-pressed": !!(selected ?? active), onClick }, children),
     Switch: ({ checked, onChange }: any) =>
       h("input", { type: "checkbox", role: "switch", checked: !!checked, onChange }),

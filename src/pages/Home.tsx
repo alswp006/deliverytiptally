@@ -9,7 +9,7 @@ import { Amount } from '../components/Amount';
 import { Sparkline } from '../components/Sparkline';
 import { MiniBar } from '../components/MiniBar';
 import { EmptyState, LoadingState } from '../components/StateView';
-import { SubmitFooter } from '../components/BottomCTA';
+import { FloatingTabBar } from '../components/FloatingTabBar';
 import { AdSlot } from '../components/AdSlot';
 import { logClick, logImpression } from '../lib/analytics';
 import { summarize } from '../lib/summary';
@@ -21,6 +21,14 @@ import { PLATFORM_LABEL, STORAGE_KEYS } from '../lib/types';
 import type { DeliveryOrder } from '../lib/types';
 
 const AD_GROUP_ID: string = import.meta.env.VITE_TOSS_AD_GROUP_ID ?? '';
+
+// 하단 탭 4개 — 모든 탭-루트 화면(/, /orders, /report, /settings/goal)이 같은 배열을 쓴다.
+const TABS = [
+  { label: '홈', path: '/' },
+  { label: '기록', path: '/orders' },
+  { label: '리포트', path: '/report' },
+  { label: '설정', path: '/settings/goal' },
+];
 
 function tick(type: 'tickWeak' | 'success') {
   try {
@@ -87,15 +95,8 @@ export default function Home() {
   return (
     <ScreenScaffold
       top={<Top title={<Top.TitleParagraph>이번 달 배달팁</Top.TitleParagraph>} />}
-      bottom={
-        <SubmitFooter
-          label="배달 기록하기"
-          onClick={() => {
-            logClick('home_add_order');
-            navigate('/orders/new');
-          }}
-        />
-      }
+      /* 탭-루트라 하단 고정 CTA(SubmitFooter) 금지 — 1차 액션은 히어로 카드 안에 둔다(탭바와 자리 충돌) */
+      bottom={<FloatingTabBar items={TABS} />}
     >
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
         <Button variant="weak" size="small" onClick={() => moveMonth(-1)}>
@@ -117,6 +118,20 @@ export default function Home() {
             label={isCurrent ? '이번 달 배달팁' : `${formatMonthLabel(month)} 배달팁`}
             value={<Amount value={summary.totalTip} unit="원" typography="t1" />}
             caption={caption}
+            action={
+              <Button
+                variant="fill"
+                size="large"
+                display="block"
+                onClick={() => {
+                  tick('success');
+                  logClick('home_add_order');
+                  navigate('/orders/new');
+                }}
+              >
+                배달 기록하기
+              </Button>
+            }
           />
           <Spacing size={16} />
 
@@ -222,7 +237,10 @@ export default function Home() {
             <TextButton size="small" onClick={() => navigate('/orders')}>전체 기록</TextButton>
             <TextButton
               size="small"
-              onClick={() => navigate('/report', { state: { month } })}
+              onClick={() => {
+                logClick('open_monthly_report');
+                navigate('/report', { state: { month } });
+              }}
             >
               월간 리포트 보기
             </TextButton>

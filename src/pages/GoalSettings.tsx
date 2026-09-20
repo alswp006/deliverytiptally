@@ -1,14 +1,22 @@
 import { useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Top, Chip, TextField, Spacing, Paragraph, Toast } from "@toss/tds-mobile";
+import { Top, Chip, ChipItem, TextField, Spacing, Paragraph, Toast, Button } from "@toss/tds-mobile";
 import { generateHapticFeedback } from "@apps-in-toss/web-framework";
 import { ScreenScaffold } from "@/components/ScreenScaffold";
-import { SubmitFooter } from "@/components/BottomCTA";
+import { FloatingTabBar } from "@/components/FloatingTabBar";
 import { logClick } from "@/lib/analytics";
 import { getSettings, saveSettings, validateGoal } from "@/lib/storage/settings";
 import { PLATFORM_LABEL, PLATFORM_ORDER } from "@/lib/types";
 import type { Platform, RouteState } from "@/lib/types";
+
+// 하단 탭 4개 — 탭-루트 화면이 공유하는 배열(홈/기록/리포트와 동일 순서).
+const TABS = [
+  { label: "홈", path: "/" },
+  { label: "기록", path: "/orders" },
+  { label: "리포트", path: "/report" },
+  { label: "설정", path: "/settings/goal" },
+];
 
 const PRESETS = [
   { label: "2만원", value: 20000 },
@@ -34,12 +42,8 @@ function toInt(display: string): number {
   return Number.isFinite(n) ? n : NaN;
 }
 
-const chipAny = Chip as unknown as { Item?: ComponentType<any> };
-const ChipItem: ComponentType<{ selected?: boolean; onClick?: () => void; children?: ReactNode }> =
-  chipAny.Item ?? (Chip as unknown as ComponentType<any>);
-const ChipGroup: ComponentType<{ children: ReactNode }> = chipAny.Item
-  ? (Chip as unknown as ComponentType<{ children: ReactNode }>)
-  : ({ children }) => <>{children}</>;
+// TDS Chip은 그룹 컨테이너(div), ChipItem이 개별 칩(button) — 둘 다 최상위 export(`Chip.Item` 없음).
+const ChipGroup = Chip as unknown as ComponentType<{ children: ReactNode }>;
 
 export default function GoalSettings() {
   const navigate = useNavigate();
@@ -96,7 +100,8 @@ export default function GoalSettings() {
   return (
     <ScreenScaffold
       top={<Top title={<Top.TitleParagraph>월 배달비 목표</Top.TitleParagraph>} />}
-      bottom={<SubmitFooter label="저장하기" onClick={handleSave} loading={saving} />}
+      /* 탭-루트라 하단 고정 CTA 금지 — 저장 버튼은 본문 최하단 전체폭 Button으로 둔다 */
+      bottom={<FloatingTabBar items={TABS} />}
     >
       <Spacing size={16} />
       <TextField
@@ -152,6 +157,19 @@ export default function GoalSettings() {
         </ChipGroup>
       </div>
       <Spacing size={24} />
+      <Paragraph.Text typography="st13">기록은 이 기기에만 저장돼요</Paragraph.Text>
+      <Spacing size={16} />
+      <Button
+        variant="fill"
+        size="large"
+        display="block"
+        loading={saving}
+        disabled={saving}
+        onClick={handleSave}
+      >
+        저장하기
+      </Button>
+      <Spacing size={96} />
       {toast !== null && (
         <Toast open position="bottom" text={toast} onClose={() => setToast(null)} />
       )}

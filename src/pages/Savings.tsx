@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
-import { useLocation } from "react-router-dom";
-import { Asset, ListRow, Paragraph, Spacing, Top } from "@toss/tds-mobile";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Asset, Button, ListRow, Paragraph, Spacing, Top } from "@toss/tds-mobile";
 import { ScreenScaffold } from "@/components/ScreenScaffold";
 import { FloatingTabBar } from "@/components/FloatingTabBar";
 import { SummaryHero } from "@/components/SummaryHero";
@@ -9,7 +9,7 @@ import { MiniBar } from "@/components/MiniBar";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/StateView";
 import { AdSlot } from "@/components/AdSlot";
-import { logImpression } from "@/lib/analytics";
+import { logClick, logImpression } from "@/lib/analytics";
 import { monthOf, normalizeMonthParam } from "@/lib/date";
 import { formatKRW, formatMonthLabel, formatPercent } from "@/lib/format";
 import { calcSavings } from "@/lib/savings";
@@ -84,6 +84,7 @@ export default function Savings() {
     return { total, count, rows };
   }, [monthOrders]);
 
+  const navigate = useNavigate();
   const heroRef = useImpressionOnce("savings_hero", true);
   const adRef = useImpressionOnce("savings_banner", !!AD_GROUP_ID);
 
@@ -148,6 +149,19 @@ export default function Savings() {
           )}
         </Card>
       </div>
+
+      <Spacing size={24} />
+      <Button
+        variant="fill"
+        size="large"
+        display="block"
+        onClick={() => {
+          logClick("savings_to_report");
+          navigate("/report", { state: { month } });
+        }}
+      >
+        {`${formatMonthLabel(month)} 리포트 보기`}
+      </Button>
 
       {AD_GROUP_ID ? (
         <>

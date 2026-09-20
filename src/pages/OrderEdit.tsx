@@ -5,6 +5,7 @@ import {
   Top,
   ListRow,
   Chip,
+  ChipItem,
   Switch,
   TextField,
   Spacing,
@@ -56,12 +57,8 @@ function daysBefore(date: string, days: number): string {
   return new Date(Date.UTC(y, m - 1, d - days)).toISOString().slice(0, 10);
 }
 
-const chipAny = Chip as unknown as { Item?: ComponentType<any> };
-const ChipItem: ComponentType<{ selected?: boolean; onClick?: () => void; children?: ReactNode }> =
-  chipAny.Item ?? (Chip as unknown as ComponentType<any>);
-const ChipGroup: ComponentType<{ children: ReactNode }> = chipAny.Item
-  ? (Chip as unknown as ComponentType<{ children: ReactNode }>)
-  : ({ children }) => <>{children}</>;
+// TDS Chip은 그룹 컨테이너(div), ChipItem이 개별 칩(button) — 둘 다 최상위 export(`Chip.Item` 없음).
+const ChipGroup = Chip as unknown as ComponentType<{ children: ReactNode }>;
 
 function withCommas(n: number): string {
   return formatDigits(String(Math.max(0, Math.floor(n || 0))));
@@ -243,7 +240,7 @@ function EditForm({ order }: { order: DeliveryOrder }) {
           <TextField
             variant="box"
             label="주문 금액"
-            placeholder="예: 18,000"
+            placeholder="주문 금액 예: 18,000"
             value={food}
             onChange={numberField(setFood)}
             inputMode="numeric"
@@ -258,7 +255,7 @@ function EditForm({ order }: { order: DeliveryOrder }) {
           <TextField
             variant="box"
             label="배달팁"
-            placeholder="예: 3,000"
+            placeholder="배달팁 예: 3,000"
             value={tip}
             onChange={numberField(setTip)}
             inputMode="numeric"
@@ -273,7 +270,7 @@ function EditForm({ order }: { order: DeliveryOrder }) {
           <TextField
             variant="box"
             label="최소주문 추가금액"
-            placeholder="예: 2,000"
+            placeholder="최소주문 추가금액 예: 2,000"
             value={padding}
             onChange={numberField(setPadding)}
             inputMode="numeric"
@@ -288,7 +285,7 @@ function EditForm({ order }: { order: DeliveryOrder }) {
           <TextField
             variant="box"
             label="메모"
-            placeholder="예: 야식, 회식"
+            placeholder="메모 예: 야식, 회식"
             value={memo}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setMemo(e.target.value)}
             maxLength={30}
