@@ -191,6 +191,7 @@ export interface RouteState {
     date.ts
     format.ts
     review.ts
+    savings.ts
     share.ts
     storage/
     storage.ts
@@ -219,6 +220,7 @@ export interface RouteState {
 - date.ts: export function todayKST(): string; export function currentMonthKST(): string; export function isValidMonthKey(v: unknown): v is string; export function normalizeMonthParam(v: string | null | undefined): string; export function daysInMonth(month: string): number; export function monthOf(date: string): string; export function shiftMonth(month: string, delta: number): string; export function isFutureMonth(month: string): boolean
 - format.ts: export function formatKRW(n: number): string; export function formatPercent(ratio: number, digits = 0): string; export function formatMonthLabel(month: string): string; export function formatDayLabel(date: string): string; export function formatAmount(amount: number, opts?:
 - review.ts: export function requestReviewOnce(key: string = REVIEW_REQUESTED_KEY): void
+- savings.ts: export interface SavingsResult; export function calcSavings(orders: DeliveryOrder[], month: string): SavingsResult; export interface SavingsSummary; export function calculateSavings(orders: DeliveryOrder[], targetKrw?: number): SavingsSummary
 - share.ts: export interface ShareAppOptions; export async function shareApp(opts: ShareAppOptions): Promise<void>
 - storage/core.ts: export function setStorageErrorHandler( handler: ((error: Error) => void) | null ): void; export function safeGet( key: string ): StorageResult<unknown>; export function safeSet( key: string, value: string ): StorageResult<void>; export function listOrders(): DeliveryOrder[]; export function getOrder(id: string): DeliveryOrder | null
 - storage/orders.ts: export function validateOrderInput(input: OrderInput): StorageResult<void>; export function getOrders(): DeliveryOrder[]; export function addOrder(input: OrderInput): StorageResult<; export function updateOrder( id: string, input: Partial<OrderInput> ): StorageResult<void>; export function deleteOrder(id: string): StorageResult<void>
@@ -226,10 +228,7 @@ export interface RouteState {
 - storage/settings.ts: export function getSettings(): AppSettings; export function saveSettings( patch: Partial<AppSettings> ): StorageResult<AppSettings>; export function markGoalAlerted(month: string): StorageResult<AppSettings>; export function markReportUnlocked(month: string): StorageResult<AppSettings>; export function isReportUnlocked(month: string): boolean; export function markReviewRequested(): StorageResult<AppSettings>; export function setDefaultPlatform(p: Platform): StorageResult<AppSettings>; export function validateGoal(value: number): StorageResult<void>
 - storage.ts: export function getItem<T>(key: string): T | null; export function setItem<T>(key: string, value: T): void; export function removeItem(key: string): void
 - summary.ts: export interface PaddingSummary; export function summarize(orders: DeliveryOrder[], month: string): MonthlySummary; export function summarizePadding(orders: DeliveryOrder[], month: string): PaddingSummary
-- types.ts: export type Platform = "BAEMIN" | "COUPANG_EATS" | "YOGIYO" | "ETC"; export const PLATFORM_LABEL: Record<Platform, string> =; export const PLATFORM_ORDER: Platform[] = ["ETC", "BAEMIN", "YOGIYO", "COUPANG_EATS"]; export interface DeliveryOrder; export type OrderInput = Omit<DeliveryOrder, "id" | "createdAt" | "updatedAt">; export interface AppSettings; export interface MonthlySummary; export type StorageFailReason = "LIMIT" | "QUOTA" | "INVALID" | "NOT_FOUND"
-- utils.ts: export function cn(...classes: (string | boolean | undefined | null)[]): string; export function formatNumber(n: number): string; export function formatCurrency(n: number, currency = 'KRW'): string
-
-### Components (src/compone...
+- types.ts: export type Platform = "BAEMIN" | "COUPANG_EATS" | "YOGIYO" | "ETC"; export const PLATFORM_LABEL: Record<Platform, string> =; export const PLATFORM_ORDER: Platform[] = ["ETC", "BAEMIN", "YOGIYO", "COUPANG_EATS"]; export interface DeliveryOrder; export type OrderInput = Omit<DeliveryOrder, "id" | "createdAt" | "updatedAt">; export interface AppSettings; export interface MonthlySummary; export type StorageFailReason = "LIMIT" | ...
 CRITICAL: Before creating any new function, type, or component, check the list above. If something similar exists, import and use it.
 
 ## Already Implemented (do NOT duplicate or overwrite)
@@ -240,79 +239,4 @@ CRITICAL: Before creating any new function, type, or component, check the list a
 - 0005: 주문 CRUD + 입력 검증 (한도·쿼터 에러) (files: src/lib/storage/orders.ts)
 - 0006: AppSettings 저장소 + 목표 검증 (files: src/lib/storage/settings.ts)
 - 0007: 월별 집계 순수 함수 summarize / summarizePadding (files: src/lib/summary.ts)
-
-## Available exports from existing files
-// src/App.tsx
-export default function App() {
-
-// src/components/AdSlot.tsx
-export function AdSlot({ adGroupId, className, variant, theme }: AdSlotProps) {
-
-// src/components/Amount.tsx
-export function Amount({
-
-// src/components/BottomCTA.tsx
-export function SubmitFooter({
-export function ButtonStack({
-
-// src/components/Card.tsx
-export function Card({
-
-// src/components/CountUp.tsx
-export function CountUp({
-
-// src/components/FloatingTabBar.tsx
-export type TabItem = {
-export function FloatingTabBar({ items }: { items: TabItem[] }) {
-
-// src/components/MiniBar.tsx
-export function MiniBar({
-
-// src/components/PageShell.tsx
-export function PageShell({
-
-// src/components/ScreenScaffold.tsx
-export function ScreenScaffold({
-
-// src/components/Sparkline.tsx
-export function Sparkline({
-
-// src/components/StateView.tsx
-export function EmptyState({
-export function LoadingState({
-
-// src/components/SummaryHero.tsx
-export function SummaryHero({
-
-// src/components/TossPurchase.tsx
-export interface TossPurchaseResult {
-export function TossPurchase({
-
-// src/components/TossRewardAd.tsx
-export function TossRewardAd({
-
-// src/lib/analytics.ts
-export type LogFields = Record<string, string | number | boolean | null>;
-export const DWELL_MS = 3000;
-export function fireAndForget(call: () => unknown): void {
-export function logScreen(page: string, extra?: LogFields): void {
-export function logClick(name: string, extra?: LogFields): void {
-export function logImpression(name: string, extra?: LogFields): void {
-export function useScreenLog(page: string): void {
-
-// src/lib/contract.ts
-export type Order = { id: string; date: string; amountKrw: number; memo?: string; category: string; source: "direct" | "delivery" };
-export type AppSettings = { monthlyGoalKrw: number; currency: "KRW" | "USD"; locale: "ko-KR" | "en-US" };
-export type ValidationError = { field: string; message: string };
-export type MonthlySummary = { year: number; month: number; totalKrw: number; count: number; orders: Order
-
-## Memory Index (자동 학습 — 힌트로만 사용, 실제 코드 확인 필수)
-
-Available topics: deploy(4), general(13), testing(2), ui(3)
-
-Key lessons (verify against actual code before applying):
-- [general] 파일 생성 전 디렉토리 구조 확인 — mkdir -p로 경로 보장 (60% · 타 앱 1회 — 맹신 금지)
-- [general] 화면·라우팅 등 소비자 모듈은 그것이 import하는 생산자 모듈이 병합된 뒤에만 병합하고, 순서를 지킬 수 없으면 소비자 병합과 동시에 최소 플레이스홀더를 만들어 매 병합 직후 타입체크와 빌드가 항상 통과하도록 유지하라. (60% · 타 앱 1회 — 맹신 금지)
-- [general] 전역 라우팅·탭바·Provider 배선은 개별 화면보다 먼저(초반 20% 안에) 완료하고 미구현 화면은 스텁 라우트로 연결해, 시간 예산이 소진돼도 앱이 항상 실행 가능한 상태를 유지하라. (60% · 타 앱 1회 — 맹신 금지)
-- [general] 저장·데이터 접근 등 기반 계층 패킷은 이를 import 하는 화면 패킷보다 반드시 먼저 완료·병합하고, 미완료면 상위 화면 패킷 병합을 차단하라 — 빈 기반 모듈 하나가 전 라우트 스모크를 무너뜨린다. (60% · 타 앱 1회 — 맹신 금지)
-- [general] 외부에서 들어온 모든 값(라우터 state, 로컬 저장소, 부분 입력 폼)은 사용 직전에 배열·객체 기본값으로 정규화하고, 테이블/맵 조회 결과는 존재 확인 후에만 하위 속성이나 length에 접근하라. (60% · 타 앱 1회 — 맹신 금지)
+- 0008: 픽업 절약 계산 로직 (savings.ts) (files: src/lib/savings.ts)
