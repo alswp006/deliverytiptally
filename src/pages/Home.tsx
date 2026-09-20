@@ -105,11 +105,11 @@ export default function Home() {
       bottom={<FloatingTabBar items={TABS} />}
     >
       <div ref={topRef} style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
-        <Button variant="weak" size="small" onClick={() => moveMonth(-1)}>
+        <Button variant="weak" size="medium" onClick={() => moveMonth(-1)}>
           이전 달
         </Button>
         <Paragraph.Text typography="st11">{formatMonthLabel(month)}</Paragraph.Text>
-        <Button variant="weak" size="small" disabled={isCurrent} onClick={() => moveMonth(1)}>
+        <Button variant="weak" size="medium" disabled={isCurrent} onClick={() => moveMonth(1)}>
           다음 달
         </Button>
       </div>
@@ -140,7 +140,7 @@ export default function Home() {
             }
           />
           <Spacing size={8} />
-          <div style={{ paddingLeft: 16 }}>
+          <div>
             <Paragraph.Text typography="st11">
               {`총 지출 ${formatKRW(summary.totalSpend)} (주문 금액 + 배달팁)`}
             </Paragraph.Text>
@@ -163,7 +163,7 @@ export default function Home() {
             <Spacing size={8} />
             <Button
               variant="weak"
-              size="small"
+              size="medium"
               onClick={() => {
                 logClick('edit_goal');
                 navigate('/settings/goal', { state: { currentGoal: goal } });
@@ -245,10 +245,10 @@ export default function Home() {
           )}
           <Spacing size={16} />
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 8px' }}>
-            <TextButton size="small" onClick={() => navigate('/orders')}>전체 기록</TextButton>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 4px' }}>
+            <TextButton size="medium" onClick={() => navigate('/orders')}>전체 기록</TextButton>
             <TextButton
-              size="small"
+              size="medium"
               onClick={() => {
                 logClick('open_monthly_report');
                 navigate('/report', { state: { month } });

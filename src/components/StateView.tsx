@@ -37,11 +37,15 @@ export function EmptyState({
     >
       {icon}
       {icon ? <Spacing size={12} /> : null}
-      <Paragraph.Text typography="t4">{title}</Paragraph.Text>
+      <div style={{ wordBreak: "keep-all" }}>
+        <Paragraph.Text typography="t4">{title}</Paragraph.Text>
+      </div>
       {description ? (
         <>
           <Spacing size={4} />
-          <Paragraph.Text typography="t6">{description}</Paragraph.Text>
+          <div style={{ wordBreak: "keep-all" }}>
+            <Paragraph.Text typography="t6">{description}</Paragraph.Text>
+          </div>
         </>
       ) : null}
       {action ? (

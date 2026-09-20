@@ -144,11 +144,11 @@ export default function OrderList() {
       bottom={<FloatingTabBar items={TABS} />}
     >
       <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "space-between" }}>
-        <Button size="small" variant="weak" onClick={() => changeMonth(-1)}>
+        <Button size="medium" variant="weak" onClick={() => changeMonth(-1)}>
           이전 달
         </Button>
         <Paragraph.Text typography="st11">{formatMonthLabel(month)}</Paragraph.Text>
-        <Button size="small" variant="weak" disabled={nextDisabled} onClick={() => changeMonth(1)}>
+        <Button size="medium" variant="weak" disabled={nextDisabled} onClick={() => changeMonth(1)}>
           다음 달
         </Button>
       </div>
@@ -157,7 +157,7 @@ export default function OrderList() {
         {FILTERS.map((p) => (
           <Button
             key={p}
-            size="small"
+            size="medium"
             variant={platform === p ? "fill" : "weak"}
             aria-pressed={platform === p}
             onClick={() => toggleFilter(p)}

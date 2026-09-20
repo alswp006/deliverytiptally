@@ -31,10 +31,11 @@ export function FloatingTabBar({ items }: { items: TabItem[] }) {
         left: 0,
         right: 0,
         bottom: 0,
+        zIndex: 10,
         display: "flex",
         justifyContent: "space-around",
         alignItems: "stretch",
-        padding: "6px 8px calc(var(--toss-safe-area-bottom) + 6px)",
+        padding: "6px 8px calc(var(--toss-safe-area-bottom, env(safe-area-inset-bottom, 0px)) + 6px)",
         backgroundColor: "var(--adaptiveBackground)",
         borderTop: "1px solid var(--adaptiveGrey200)",
       }}
