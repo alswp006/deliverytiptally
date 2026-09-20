@@ -18,7 +18,7 @@ import { generateHapticFeedback } from "@apps-in-toss/web-framework";
 import { ScreenScaffold } from "@/components/ScreenScaffold";
 import { logClick } from "@/lib/analytics";
 import { todayKST } from "@/lib/date";
-import { getSettings } from "@/lib/storage/settings";
+import { getSettings, setDefaultPlatform } from "@/lib/storage/settings";
 import { addOrder, validateOrderInput } from "@/lib/storage/orders";
 import { PLATFORM_LABEL, PLATFORM_ORDER } from "@/lib/types";
 import type { OrderInput, Platform } from "@/lib/types";
@@ -143,9 +143,14 @@ export default function OrderNew() {
       return;
     }
 
+    try {
+      setDefaultPlatform(platform);
+    } catch {
+      /* 기본 플랫폼 저장 실패는 기록 저장에 영향 없음 */
+    }
     haptic("success");
     logClick("save_order");
-    navigate("/", { state: { savedOrderId: result.data.id } });
+    navigate("/", { state: { savedOrderId: result.data.id }, replace: true });
   }
 
   const dateOptions = Array.from({ length: DATE_OPTION_DAYS }, (_, i) => daysBefore(today, i));

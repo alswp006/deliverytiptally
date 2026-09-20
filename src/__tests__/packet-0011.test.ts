@@ -123,7 +123,7 @@ describe("주문 기록 화면 `/orders/new`", () => {
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledTimes(1));
     const saved = storedOrders();
     expect(saved).toHaveLength(1);
-    expect(mockNavigate).toHaveBeenCalledWith("/", { state: { savedOrderId: saved[0].id } });
+    expect(mockNavigate).toHaveBeenCalledWith("/", { state: { savedOrderId: saved[0].id }, replace: true });
     expect(generateHapticFeedback).toHaveBeenCalledWith({ type: "success" });
   });
 
