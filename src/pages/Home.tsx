@@ -6,6 +6,7 @@ import { ScreenScaffold } from '../components/ScreenScaffold';
 import { SummaryHero } from '../components/SummaryHero';
 import { Card } from '../components/Card';
 import { Amount } from '../components/Amount';
+import { CountUp } from '../components/CountUp';
 import { Sparkline } from '../components/Sparkline';
 import { MiniBar } from '../components/MiniBar';
 import { EmptyState, LoadingState } from '../components/StateView';
@@ -46,7 +47,7 @@ export default function Home() {
   const [month, setMonth] = useState(currentMonthKST);
   const [orders, setOrders] = useState<DeliveryOrder[] | null>(null);
   const [goal, setGoal] = useState(0);
-  const [toastOpen, setToastOpen] = useState(false);
+  const [toastText, setToastText] = useState<string | null>(null);
   const adLogged = useRef(false);
   const topRef = useRef<HTMLDivElement>(null);
 
@@ -63,8 +64,10 @@ export default function Home() {
       list = broken ? [] : listOrders();
       const settings = getSettings();
       setGoal(settings.monthlyTipGoal);
-      // 방금 저장한 주문으로 이번 달 목표를 처음 넘겼을 때만 1회 경고
+      // 방금 저장한 주문 — "기록했어요" 토스트 + 이번 달 목표를 처음 넘겼을 때만 1회 경고
       if (typeof savedOrderId === 'string' && !broken) {
+        const saved = list.find((o) => o.id === savedOrderId);
+        if (saved) setToastText(`기록했어요 · 배달팁 ${formatKRW(saved.deliveryTip)}`);
         const cur = currentMonthKST();
         const total = summarize(list, cur).totalTip;
         if (settings.monthlyTipGoal > 0 && total > settings.monthlyTipGoal && !settings.goalAlertedMonths.includes(cur)) {
@@ -76,7 +79,7 @@ export default function Home() {
       broken = true;
     }
     setOrders(list);
-    if (broken) setToastOpen(true);
+    if (broken) setToastText('저장된 기록을 불러오지 못했어요');
   }, []);
 
   useEffect(() => {
@@ -135,7 +138,7 @@ export default function Home() {
           <SummaryHero
             testId="tip-summary-hero"
             label={isCurrent ? '이번 달 배달팁' : `${formatMonthLabel(month)} 배달팁`}
-            value={<Amount value={summary.totalTip} unit="원" typography="t1" />}
+            value={<CountUp value={summary.totalTip} unit="원" typography="t1" />}
             caption={caption}
             action={
               <Button
@@ -278,10 +281,10 @@ export default function Home() {
       <Spacing size={96} />
 
       <Toast
-        open={toastOpen}
+        open={toastText !== null}
         position="bottom"
-        text="저장된 기록을 불러오지 못했어요"
-        onClose={() => setToastOpen(false)}
+        text={toastText ?? ''}
+        onClose={() => setToastText(null)}
       />
       {goalAlert ? (
         <AlertDialog

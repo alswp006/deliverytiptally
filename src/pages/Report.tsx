@@ -6,6 +6,7 @@ import { ScreenScaffold } from "@/components/ScreenScaffold";
 import { FloatingTabBar } from "@/components/FloatingTabBar";
 import { SummaryHero } from "@/components/SummaryHero";
 import { Amount } from "@/components/Amount";
+import { CountUp } from "@/components/CountUp";
 import { Card } from "@/components/Card";
 import { Sparkline } from "@/components/Sparkline";
 import { MiniBar } from "@/components/MiniBar";
@@ -135,7 +136,7 @@ export default function Report() {
     <div ref={cardRef} data-testid="report-card">
       <SummaryHero
         label={`${formatMonthLabel(month)} 배달팁`}
-        value={<Amount value={summary.totalTip} unit="원" typography="t1" />}
+        value={<CountUp value={summary.totalTip} unit="원" typography="t1" />}
         caption={`주문 ${summary.orderCount}건 · 평균 ${formatKRW(summary.avgTip)}`}
       />
       <Spacing size={16} />
