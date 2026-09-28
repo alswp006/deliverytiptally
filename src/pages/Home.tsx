@@ -5,7 +5,6 @@ import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { ScreenScaffold } from '../components/ScreenScaffold';
 import { SummaryHero } from '../components/SummaryHero';
 import { Card } from '../components/Card';
-import { Amount } from '../components/Amount';
 import { CountUp } from '../components/CountUp';
 import { Sparkline } from '../components/Sparkline';
 import { MiniBar } from '../components/MiniBar';
