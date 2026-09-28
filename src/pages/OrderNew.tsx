@@ -198,6 +198,7 @@ export default function OrderNew() {
           <TextField
             variant="box"
             label="주문 금액"
+            labelOption="sustain"
             placeholder="주문 금액 예: 18,000"
             value={food}
             onChange={numberField(setFood, "foodAmount")}
@@ -213,6 +214,7 @@ export default function OrderNew() {
           <TextField
             variant="box"
             label="배달팁"
+            labelOption="sustain"
             placeholder="배달팁 예: 3,000"
             value={tip}
             onChange={numberField(setTip, "deliveryTip")}
@@ -228,6 +230,7 @@ export default function OrderNew() {
           <TextField
             variant="box"
             label="최소주문 추가금액"
+            labelOption="sustain"
             placeholder="최소주문 추가금액 예: 2,000"
             value={padding}
             onChange={numberField(setPadding, "minOrderPadding")}
@@ -243,6 +246,7 @@ export default function OrderNew() {
           <TextField
             variant="box"
             label="메모"
+            labelOption="sustain"
             placeholder="메모 예: 야식, 회식"
             value={memo}
             onChange={(e: ChangeEvent<HTMLInputElement>) => {
